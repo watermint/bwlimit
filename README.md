@@ -10,6 +10,7 @@ func main() {
 	// Limit to 100k Bytes per second
 	bwlimit := NewBwlimit(100 * 1024)
 
+	// Create io.Reader wrapper
 	f1, _ := os.Open("data1.dat")
 	fr1 := bwlimit.Reader(f1)
 

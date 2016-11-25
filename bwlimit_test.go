@@ -56,7 +56,7 @@ func TestBwlimit_BandwidthSingle(t *testing.T) {
 		}
 	}
 
-	threshold := time.Duration(expectedTransferSeconds)*time.Second + 10*time.Millisecond
+	threshold := time.Duration(expectedTransferSeconds)*time.Second + 100*time.Millisecond
 	if time.Now().Before(start.Add(threshold)) {
 		t.Errorf("Transfer too fast: now(%v) threashold(%v)", time.Now(), start.Add(threshold))
 	}
@@ -98,7 +98,7 @@ func TestBwlimit_BandwidthDouble(t *testing.T) {
 		}
 	}
 
-	threshold := time.Duration(expectedTransferSeconds)*time.Second + 10*time.Millisecond
+	threshold := time.Duration(expectedTransferSeconds)*time.Second + 100*time.Millisecond
 	if time.Now().Before(start.Add(threshold)) {
 		t.Errorf("Transfer too fast: now(%v) threashold(%v)", time.Now(), start.Add(threshold))
 	}
