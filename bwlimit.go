@@ -277,3 +277,4 @@ func (w *Writer) Close() error {
 	w.limiter.closeStream(w.streamId)
 	return nil
 }
+
