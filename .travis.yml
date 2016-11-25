@@ -9,7 +9,7 @@ before_install:
  - go get github.com/mattn/goveralls
 
 script:
- - go test -coverprofile=gover.coverprofile
+ - go test -coverprofile=gover.coverprofile ./...
  - gover
 
 after_success:
