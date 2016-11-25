@@ -1,5 +1,8 @@
 # bwlimit
 
+[![Build Status](https://travis-ci.org/watermint/bwlimit.svg?branch=master)](https://travis-ci.org/watermint/bwlimit)
+[![Coverage Status](https://coveralls.io/repos/github/watermint/bwlimit/badge.svg?branch=master)](https://coveralls.io/github/watermint/bwlimit?branch=master)
+
 Limit IO bandwidth for multiple io.Reader/io.Writer.
 
 ## Usage
