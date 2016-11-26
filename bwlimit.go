@@ -13,12 +13,14 @@ const (
 
 // Create new bandwidth limiter.
 // rateLimit: maximum bandwidth in bytes per second.
-func NewBwlimit(rateLimit int) Bwlimit {
+// blocking: block `Read`/`Write` until next takt time.
+func NewBwlimit(rateLimit int, blocking bool) Bwlimit {
 	bw := Bwlimit{
 		streamWindow: make(map[uint64]int),
 	}
 	bw.SetTaktPerSecond(DEFAULT_TAKT_PER_SECOND)
 	bw.SetRateLimit(rateLimit)
+	bw.SetBlocking(blocking)
 
 	return bw
 }
@@ -33,6 +35,7 @@ type Bwlimit struct {
 	taktPerSecond int
 
 	manualTakt bool
+	blocking   bool
 
 	streamSeq    uint64
 	streamWindow map[uint64]int
@@ -41,6 +44,11 @@ type Bwlimit struct {
 	timerRunning  bool
 	timerShutdown sync.WaitGroup
 	activeIO      sync.WaitGroup
+}
+
+// Set blocking
+func (bw *Bwlimit) SetBlocking(blocking bool) {
+	bw.blocking = blocking
 }
 
 // Set new takt count per second.
@@ -238,6 +246,10 @@ func (r *Reader) Read(p []byte) (n int, err error) {
 		if err == io.EOF {
 			r.Close()
 		}
+	} else {
+		if r.limiter.blocking {
+			time.Sleep(time.Duration(r.limiter.taktTime) * time.Millisecond)
+		}
 	}
 	return
 }
@@ -269,6 +281,10 @@ func (w *Writer) Write(p []byte) (n int, err error) {
 		p = p[:n]
 		n, err = w.source.Write(p)
 		w.limiter.consumeWindow(w.streamId, n)
+	} else {
+		if w.limiter.blocking {
+			time.Sleep(time.Duration(w.limiter.taktTime) * time.Millisecond)
+		}
 	}
 	return
 }

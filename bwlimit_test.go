@@ -2,14 +2,83 @@ package bwlimit
 
 import (
 	"bytes"
+	"crypto/rand"
 	"errors"
 	"io"
 	"testing"
 	"time"
 )
 
+func TestBwlimit_SetBlocking(t *testing.T) {
+	bw := NewBwlimit(1000, true)
+	bw.SetTaktPerSecond(10)
+	seq := make([]byte, 1000)
+	r := bytes.NewReader(seq)
+	wr := bw.Reader(r)
+
+	count := 0
+
+	buf := make([]byte, 1000)
+	for {
+		_, err := wr.Read(buf)
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			t.Fatal(err)
+		}
+		count++
+	}
+
+	if count > 100 {
+		t.Errorf("Too many loop: %d", count)
+	}
+}
+
+func TestBwlimit_Reader(t *testing.T) {
+	bw := NewBwlimit(1000, false)
+
+	// generate content
+	inSeq := make([]byte, 1000)
+	n, err := rand.Read(inSeq)
+	if err != nil || n != 1000 {
+		t.Fail()
+	}
+	r := bytes.NewReader(inSeq)
+	wr := bw.Reader(r)
+
+	outSeq := make([]byte, 1000)
+	offset := 0
+	for {
+		buf := make([]byte, 1000)
+		n, err = wr.Read(buf)
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			t.Fatal(err)
+		}
+		if n > 0 {
+
+		}
+		for i := 0; i < n; i++ {
+			outSeq[i+offset] = buf[i]
+		}
+		offset += n
+	}
+
+	for i := 0; i < 1000; i++ {
+		if inSeq[i] != outSeq[i] {
+			t.Error("Invalid content found")
+		}
+	}
+
+	// wait for all reader close
+	bw.Wait()
+}
+
 func TestBwlimit_Writer(t *testing.T) {
-	bw := NewBwlimit(1000)
+	bw := NewBwlimit(1000, false)
 	bw.SetTaktPerSecond(10)
 	seq := make([]byte, 8000)
 	w := bytes.NewBuffer(seq)
@@ -33,7 +102,7 @@ func TestBwlimit_Writer(t *testing.T) {
 func TestBwlimit_BandwidthSingle(t *testing.T) {
 	expectedTransferSeconds := 10
 	rate := 1000
-	bw := NewBwlimit(rate)
+	bw := NewBwlimit(rate, false)
 	bw.SetTaktPerSecond(10)
 	seq := make([]byte, rate*expectedTransferSeconds)
 	f := bytes.NewReader(seq)
@@ -65,7 +134,7 @@ func TestBwlimit_BandwidthSingle(t *testing.T) {
 func TestBwlimit_BandwidthDouble(t *testing.T) {
 	expectedTransferSeconds := 10
 	rate := 1000
-	bw := NewBwlimit(rate)
+	bw := NewBwlimit(rate, false)
 	bw.SetTaktPerSecond(10)
 	seq1 := make([]byte, rate*expectedTransferSeconds/2)
 	seq2 := make([]byte, rate*expectedTransferSeconds/2)
@@ -105,7 +174,7 @@ func TestBwlimit_BandwidthDouble(t *testing.T) {
 }
 
 func TestBwlimit_ManualTakt(t *testing.T) {
-	bw := NewBwlimit(1000)
+	bw := NewBwlimit(1000, false)
 	bw.SetTaktPerSecond(10)
 	bw.manualTakt = true
 
