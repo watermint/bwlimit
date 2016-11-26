@@ -9,6 +9,19 @@ import (
 	"time"
 )
 
+func TestBwlimit_Unlimited(t *testing.T) {
+	bw := NewBwlimit(RATE_UNLIMITED, true)
+	seq := make([]byte, 1000)
+	r := bytes.NewReader(seq)
+	wr := bw.Reader(r)
+	buf := make([]byte, 1000)
+
+	n, err := wr.Read(buf)
+	if n != 1000 || err != nil {
+		t.Errorf("Invalid rate n[%d] or err[%s]", n, err)
+	}
+}
+
 func TestBwlimit_SetBlocking(t *testing.T) {
 	bw := NewBwlimit(1000, true)
 	bw.SetTaktPerSecond(10)

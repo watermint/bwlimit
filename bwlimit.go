@@ -2,6 +2,7 @@ package bwlimit
 
 import (
 	"io"
+	"math"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -9,10 +10,11 @@ import (
 
 const (
 	DEFAULT_TAKT_PER_SECOND = 100
+	RATE_UNLIMITED          = 0
 )
 
 // Create new bandwidth limiter.
-// rateLimit: maximum bandwidth in bytes per second.
+// rateLimit: maximum bandwidth in bytes per second. 0 for unlimited.
 // blocking: block `Read`/`Write` until next takt time.
 func NewBwlimit(rateLimit int, blocking bool) Bwlimit {
 	bw := Bwlimit{
@@ -180,6 +182,10 @@ func (bw *Bwlimit) takt() {
 
 // Returns allowed windows size for streamId.
 func (bw *Bwlimit) currentWindow(streamId uint64) int {
+	if bw.rateLimit == RATE_UNLIMITED {
+		return math.MaxInt32
+	}
+
 	bw.streamMutex.Lock()
 	defer bw.streamMutex.Unlock()
 
@@ -192,6 +198,10 @@ func (bw *Bwlimit) currentWindow(streamId uint64) int {
 
 // Consume bandwidth window for streamId.
 func (bw *Bwlimit) consumeWindow(streamId uint64, consumeBytes int) {
+	if bw.rateLimit == RATE_UNLIMITED {
+		return
+	}
+
 	bw.streamMutex.Lock()
 	defer bw.streamMutex.Unlock()
 
