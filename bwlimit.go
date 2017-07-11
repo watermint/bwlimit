@@ -4,7 +4,6 @@ import (
 	"io"
 	"math"
 	"sync"
-	"sync/atomic"
 	"time"
 )
 
@@ -93,7 +92,7 @@ func (bw *Bwlimit) issue() uint64 {
 	defer bw.streamMutex.Unlock()
 
 	bw.activeIO.Add(1)
-	atomic.AddUint64(&bw.streamSeq, 1)
+	bw.streamSeq++
 
 	seq := bw.streamSeq
 	bw.streamWindow[seq] = 0
